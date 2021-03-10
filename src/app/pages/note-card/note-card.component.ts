@@ -10,8 +10,8 @@ export class NoteCardComponent implements OnInit {
   @Input() title: string
   @Input() notebody: string
 
-  @ViewChild('truncation', {static:false}) truncation: ElementRef<HTMLElement> 
-  @ViewChild('bodyText', {static:false}) bodyText: ElementRef<HTMLElement> 
+  @ViewChild('truncation', {static:true}) truncation: ElementRef<HTMLElement> 
+  @ViewChild('bodyText', {static:true}) bodyText: ElementRef<HTMLElement> 
 
   constructor(private renderer: Renderer2) { }
 
