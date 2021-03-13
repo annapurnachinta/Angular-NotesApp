@@ -33,5 +33,3 @@ export class NoteCardComponent implements OnInit {
     this.deleteEvent.emit()
   }
 }
-
-// property binding issue

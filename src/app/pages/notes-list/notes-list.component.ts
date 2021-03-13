@@ -1,5 +1,5 @@
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Note } from 'src/app/shared/note.model';
 import { NoteService } from 'src/app/shared/note.service';
 
@@ -83,14 +83,92 @@ import { NoteService } from 'src/app/shared/note.service';
 export class NotesListComponent implements OnInit {
 
   notes: Note[] = new Array<Note>();
+  filterNotes: Note[] = new Array<Note>();
 
+  @ViewChild('filterInput', {static: true}) filterInputElRef: ElementRef<HTMLInputElement>;
+  
   constructor(private noteService: NoteService) { }
 
   ngOnInit() {
     this.notes = this.noteService.getAll()
+    this.filterNotes = this.notes
+    this.filterNote('');
   }
 
-  deleteNote(id:number){
-    this.noteService.delete(id)
+  generateNoteURL(note: Note){
+    let noteId = this.noteService.getId(note)
+     return noteId
   }
+
+  deleteNote(note: Note){
+    let noteId = this.noteService.getId(note)
+    this.noteService.delete(noteId)
+    this.filterNote(this.filterInputElRef.nativeElement.value);
+  }
+
+  filterNote(query: string){
+    query = query.toLowerCase().trim()
+
+    let allResults : Note[] = new Array<Note>();
+
+    let terms: string[] = query.split(' ');
+
+    terms = this.removeDuplicate(terms)
+
+    terms.forEach(element => {
+      let result: Note[] = this.releventNotes(element)
+      allResults = [...allResults, ...result]
+    })
+
+    let uniqueResults = this.removeDuplicate(allResults)
+    this.filterNotes = uniqueResults
+
+    this.sortByRelevancy(allResults)
+
+  }
+
+  removeDuplicate(arr: Array<any>) : Array<any> {
+    let uniqueResults : Set<any> = new Set<any>();
+
+    arr.forEach(e => uniqueResults.add(e))
+    return Array.from(uniqueResults)
+  }
+
+  releventNotes(query: string) : Array<Note>{
+    query = query.toLowerCase().trim();
+    let releventNotes = this.notes.filter(note => {
+      if(note.title && note.title.toLowerCase().includes(query)){
+        return true;
+      }else if(note.body && note.body.toLowerCase().includes(query)){
+        return true;
+      }else{
+        return false;
+      }
+    })
+    return releventNotes;
+  }
+
+  sortByRelevancy(searchResults: Note[]){
+    let noteCountOBj: Object = {}
+
+    searchResults.forEach(note => {
+      let noteId = this.noteService.getId(note);
+
+      if(noteCountOBj[noteId]){
+        noteCountOBj[noteId] += 1
+      }else{
+        noteCountOBj[noteId] = 1
+      }
+    })
+    this.filterNotes = this.filterNotes.sort((a: Note, b:Note) => {
+      let aId = this.noteService.getId(a)
+      let bId = this.noteService.getId(b)
+
+      let aCount = noteCountOBj[aId]
+      let bCount = noteCountOBj[bId]
+
+      return bCount - aCount
+    })
+  }
+
 }
